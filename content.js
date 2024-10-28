@@ -19,7 +19,7 @@ function createResponseButton(emoji, text) {
   const button = document.createElement("button");
   button.className = "xengage-btn";
   button.innerHTML = `${emoji} ${text}`;
-  button.addEventListener("click", () => handleResponseClick(text));
+  button.addEventListener("click", () => handleResponseClick(text, button));
   return button;
 }
 
@@ -47,7 +47,7 @@ function getTweetContent() {
   return textContent;
 }
 
-async function handleResponseClick(type) {
+async function handleResponseClick(type, button) {
   const tweetContent = getTweetContent();
   if (!tweetContent) {
     console.error("Could not find tweet content");
@@ -55,6 +55,12 @@ async function handleResponseClick(type) {
   }
 
   try {
+    // Add loading state
+    button.classList.add("loading");
+    button.disabled = true;
+    const originalText = button.innerHTML;
+    button.innerHTML = `${originalText} ...`;
+
     // Get userId from storage
     const { userId } = await chrome.storage.sync.get("userId");
 
@@ -69,28 +75,20 @@ async function handleResponseClick(type) {
     });
 
     if (response.success) {
-      // Find the editor
       const editor = document.querySelector(
         '.DraftEditor-editorContainer [contenteditable="true"]'
       );
       if (editor) {
-        // Focus the editor first
         editor.focus();
-
-        // Create a keyboard event to trigger X.com's editor initialization
         editor.dispatchEvent(
           new KeyboardEvent("keydown", { key: "a", bubbles: true })
         );
 
-        // Small delay to ensure Draft.js has created the necessary spans
         await new Promise((resolve) => setTimeout(resolve, 50));
 
-        // Now find the data-text span that should exist
         const textSpan = editor.querySelector('[data-text="true"]');
         if (textSpan) {
           textSpan.textContent = response.generatedText;
-
-          // Trigger both input and change events to ensure X.com updates properly
           editor.dispatchEvent(new Event("input", { bubbles: true }));
           editor.dispatchEvent(new Event("change", { bubbles: true }));
         } else {
@@ -102,6 +100,11 @@ async function handleResponseClick(type) {
     }
   } catch (error) {
     console.error("Error generating response:", error);
+  } finally {
+    // Remove loading state
+    button.classList.remove("loading");
+    button.disabled = false;
+    button.innerHTML = originalText;
   }
 }
 
