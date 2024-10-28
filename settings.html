@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>XEngage Settings</title>
+    <style>
+      body {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 32px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background-color: #000000;
+        color: #ffffff;
+        line-height: 1.5;
+      }
+
+      .settings-container {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .setting-section {
+        background-color: #16181c;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .setting-section h2 {
+        margin: 0 0 16px 0;
+        font-size: 20px;
+        color: #1d9bf0;
+        font-weight: 700;
+      }
+
+      .setting-section p {
+        margin: 0 0 24px 0;
+        color: #71767b;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      textarea {
+        width: 95%;
+        min-height: 120px;
+        padding: 16px;
+        border: 1px solid #2f3336;
+        border-radius: 8px;
+        background-color: #000000;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 15px;
+        resize: vertical;
+        margin-bottom: 16px;
+        line-height: 1.5;
+        transition: border-color 0.2s;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: #1d9bf0;
+        box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.2);
+      }
+
+      .char-count {
+        font-size: 13px;
+        color: #71767b;
+        text-align: right;
+        margin-bottom: 16px;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 9999px;
+        background: #1d9bf0;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        transition: all 0.2s;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #1a8cd8;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background-color: #3e4144;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .success-message {
+        color: #00ba7c;
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 16px;
+        padding: 12px;
+        background-color: rgba(0, 186, 124, 0.1);
+        border-radius: 8px;
+        text-align: center;
+        display: none;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+      }
+
+      .danger-btn {
+        background: #f4212e;
+      }
+
+      .danger-btn:hover:not(:disabled) {
+        background-color: #dc1d28;
+      }
+
+      #resetMessage {
+        color: #f4212e;
+        background-color: rgba(244, 33, 46, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="settings-container">
+      <div class="setting-section">
+        <h2>Personal Writing Style</h2>
+        <p>
+          Add a sample of your writing style (200-300 characters) to make
+          AI-generated responses sound more like you:
+        </p>
+        <textarea
+          id="writingStyle"
+          placeholder="Enter a sample of your typical writing style..."
+        ></textarea>
+        <div class="controls">
+          <div class="char-count">0/300 characters</div>
+          <button id="saveWritingStyle">Save Writing Style</button>
+        </div>
+        <div id="successMessage" class="success-message">
+          Writing style saved successfully!
+        </div>
+      </div>
+
+      <!-- Add new section for API key management -->
+      <div class="setting-section">
+        <h2>API Key Management</h2>
+        <p>
+          Reset your Anthropic API key if you need to update it or if there are
+          any issues:
+        </p>
+        <button id="resetApiKey" class="danger-btn">Reset API Key</button>
+        <div id="resetMessage" class="success-message">
+          API key reset successfully. Please add a new key in the extension
+          popup.
+        </div>
+      </div>
+    </div>
+    <script src="settings.js"></script>
+  </body>
+</html>

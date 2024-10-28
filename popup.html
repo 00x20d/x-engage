@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>XEngage</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="api-key-section">
+        <h2>Welcome to XEngage!</h2>
+        <p>Please enter your Anthropic API key to get started:</p>
+        <input type="password" id="apiKey" placeholder="Enter your API key" />
+        <button id="saveKey">Save Key</button>
+      </div>
+
+      <div class="main-content">
+        <div class="header">
+          <h1>XEngage</h1>
+          <button id="settingsBtn" class="settings-btn">Settings</button>
+        </div>
+
+        <div class="theme-selector">
+          <button class="theme-btn blue" data-theme="blue"></button>
+          <button class="theme-btn purple" data-theme="purple"></button>
+          <button class="theme-btn pink" data-theme="pink"></button>
+          <button class="theme-btn yellow" data-theme="yellow"></button>
+          <button class="theme-btn orange" data-theme="orange"></button>
+          <button class="theme-btn green" data-theme="green"></button>
+        </div>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
