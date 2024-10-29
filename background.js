@@ -38,6 +38,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       });
     return true;
+  } else if (request.type === "API_KEY_UPDATED") {
+    // Notify all content scripts that the API key has been updated
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, { type: "API_KEY_REFRESH" });
+      });
+    });
   }
   return true;
 });

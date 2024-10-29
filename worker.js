@@ -144,15 +144,21 @@ export default {
         const { tweetContent, responseType, userId } = await request.json();
 
         // Get API key from KV
-        const apiKey = await env.API_KEYS.get(userId);
+        const apiKey = await env.API_KEY.get(userId);
         if (!apiKey) {
-          return new Response(JSON.stringify({ error: "API key not found" }), {
-            status: 401,
-            headers: {
-              "Content-Type": "application/json",
-              ...corsHeaders,
-            },
-          });
+          return new Response(
+            JSON.stringify({
+              error: "NO_API_KEY",
+              message: "Please set up your API key in the extension settings",
+            }),
+            {
+              status: 401,
+              headers: {
+                "Content-Type": "application/json",
+                ...corsHeaders,
+              },
+            }
+          );
         }
 
         // Get writing style from KV

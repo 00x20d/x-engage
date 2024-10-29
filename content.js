@@ -74,6 +74,13 @@ async function handleResponseClick(type, button) {
       },
     });
 
+    if (response.error === "NO_API_KEY") {
+      showError(
+        "Please add your API key in the extension settings to use this feature"
+      );
+      return;
+    }
+
     if (response.success) {
       const editor = document.querySelector(
         '.DraftEditor-editorContainer [contenteditable="true"]'
@@ -91,15 +98,13 @@ async function handleResponseClick(type, button) {
           textSpan.textContent = response.generatedText;
           editor.dispatchEvent(new Event("input", { bubbles: true }));
           editor.dispatchEvent(new Event("change", { bubbles: true }));
-        } else {
-          console.error("Could not find text span element");
         }
       }
     } else {
-      console.error("Failed to generate response:", response.error);
+      showError(response.error || "Failed to generate response");
     }
   } catch (error) {
-    console.error("Error generating response:", error);
+    showError("Error generating response. Please check your API key.");
   } finally {
     // Remove loading state
     button.classList.remove("loading");
@@ -167,6 +172,21 @@ function updateButtonColors(theme) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "THEME_CHANGED") {
     updateButtonColors(request.theme);
+  } else if (request.type === "API_KEY_REFRESH") {
+    // Clear any existing error messages
+    const existingError = document.querySelector(".tweet-reply-error");
+    if (existingError) existingError.remove();
+
+    // Re-enable any disabled buttons
+    document.querySelectorAll(".xengage-btn").forEach((button) => {
+      button.classList.remove("loading");
+      button.disabled = false;
+      // Reset button text if it was in loading state
+      if (button.textContent.includes("...")) {
+        const [emoji, text] = button.textContent.split(" ");
+        button.innerHTML = `${emoji} ${text.replace(" ...", "")}`;
+      }
+    });
   }
 });
 
@@ -179,3 +199,35 @@ chrome.storage.sync.get("theme", ({ theme }) => {
 
 // Initialize
 injectButtons();
+
+// Update the showError function styling to match Twitter's design
+function showError(message) {
+  const existingError = document.querySelector(".tweet-reply-error");
+  if (existingError) existingError.remove();
+
+  const errorDiv = document.createElement("div");
+  errorDiv.className = "tweet-reply-error";
+  errorDiv.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #F4212E;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 10000;
+    border-radius: 16px 16px 0 0;
+  `;
+  errorDiv.textContent = message;
+
+  // Insert error at the top of the reply modal
+  const modal = document.querySelector('[aria-modal="true"]');
+  if (modal) {
+    modal.style.position = "relative";
+    modal.insertBefore(errorDiv, modal.firstChild);
+  }
+
+  setTimeout(() => errorDiv.remove(), 5000);
+}

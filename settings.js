@@ -54,6 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
+
+      // After successful save, notify background script
+      chrome.runtime.sendMessage({
+        type: "API_KEY_UPDATED",
+      });
     } catch (error) {
       console.error("Error saving writing style:", error);
       alert("Failed to save writing style. Please try again.");
