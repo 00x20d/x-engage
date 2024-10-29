@@ -12,7 +12,7 @@ This Chrome extension enhances your X.com experience by providing AI-generated r
 **How It Works:**
 
 1. **Install & Setup:**
-   - Download XEngage from the Chrome Web Store.
+   - Clone this repo and load it into your chrome-based browser.
    - Enter your Anthropic API key in the extension popup.
    - (Optional) Provide a sample of your writing style in the settings.
 
