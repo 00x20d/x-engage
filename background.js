@@ -45,6 +45,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.tabs.sendMessage(tab.id, { type: "API_KEY_REFRESH" });
       });
     });
+  } else if (request.type === "RESET_API_KEY") {
+    chrome.storage.local.set({ hasApiKey: false }, () => {
+      // Notify all tabs about API key removal
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          chrome.tabs.sendMessage(tab.id, { type: "API_KEY_REFRESH" });
+        });
+      });
+    });
   }
   return true;
 });
@@ -82,6 +91,12 @@ async function saveApiKey(apiKey) {
 
     await chrome.storage.local.set({ hasApiKey: true });
     console.log("Background: Updated local storage");
+
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        chrome.tabs.sendMessage(tab.id, { type: "API_KEY_REFRESH" });
+      });
+    });
 
     return data;
   } catch (error) {

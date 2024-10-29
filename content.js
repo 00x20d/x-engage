@@ -75,9 +75,7 @@ async function handleResponseClick(type, button) {
     });
 
     if (response.error === "NO_API_KEY") {
-      showError(
-        "Please add your API key in the extension settings to use this feature"
-      );
+      showError("You need to add your Anthropic's API Key to the extension.");
       return;
     }
 
@@ -101,10 +99,10 @@ async function handleResponseClick(type, button) {
         }
       }
     } else {
-      showError(response.error || "Failed to generate response");
+      showError("You need to add your Anthropic's API Key to the extension.");
     }
   } catch (error) {
-    showError("Error generating response. Please check your API key.");
+    showError("You need to add your Anthropic's API Key to the extension.");
   } finally {
     // Remove loading state
     button.classList.remove("loading");
@@ -113,21 +111,40 @@ async function handleResponseClick(type, button) {
   }
 }
 
-function injectButtons() {
+// Add this function to check for API key
+async function hasValidApiKey() {
+  const { userId } = await chrome.storage.sync.get("userId");
+  const { hasApiKey } = await chrome.storage.local.get("hasApiKey");
+  return hasApiKey === true;
+}
+
+// Modify injectButtons to prevent duplicates and handle API key check
+async function injectButtons() {
+  // First check if API key exists
+  const hasApiKey = await hasValidApiKey();
+  if (!hasApiKey) {
+    // Remove any existing buttons if API key is not valid
+    document.querySelectorAll(".xengage-container").forEach((container) => {
+      container.remove();
+    });
+    return;
+  }
+
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          // Check if we're in a reply modal by looking for specific parent elements
+          // Check if we're in a reply modal
           const isReplyModal = node.closest('[aria-modal="true"]');
           if (!isReplyModal) return;
 
           const editorContainer = node.querySelector(
             ".DraftEditor-editorContainer"
           );
+          // Only inject if there's no existing container
           if (
             editorContainer &&
-            !editorContainer.querySelector(".xengage-container")
+            !editorContainer.parentNode.querySelector(".xengage-container")
           ) {
             editorContainer.parentNode.insertBefore(
               createButtonContainer(),
@@ -143,7 +160,68 @@ function injectButtons() {
     childList: true,
     subtree: true,
   });
+
+  return observer;
 }
+
+// Keep track of the observer
+let buttonsObserver = null;
+
+// Update message listener to handle API key changes
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.type === "THEME_CHANGED") {
+    updateButtonColors(request.theme);
+  } else if (request.type === "API_KEY_REFRESH") {
+    // Stop existing observer
+    if (buttonsObserver) {
+      buttonsObserver.disconnect();
+      buttonsObserver = null;
+    }
+
+    // Remove all existing buttons first
+    document.querySelectorAll(".xengage-container").forEach((container) => {
+      container.remove();
+    });
+
+    // Clear any existing error messages
+    const existingError = document.querySelector(".tweet-reply-error");
+    if (existingError) existingError.remove();
+
+    // Check API key and reinitialize
+    const hasKey = await hasValidApiKey();
+    if (hasKey) {
+      // Find any open reply modals and add buttons
+      const replyModals = document.querySelectorAll('[aria-modal="true"]');
+      replyModals.forEach((modal) => {
+        const editorContainer = modal.querySelector(
+          ".DraftEditor-editorContainer"
+        );
+        if (
+          editorContainer &&
+          !editorContainer.parentNode.querySelector(".xengage-container")
+        ) {
+          editorContainer.parentNode.insertBefore(
+            createButtonContainer(),
+            editorContainer.nextSibling
+          );
+        }
+      });
+
+      // Start new observer
+      buttonsObserver = await injectButtons();
+    }
+  }
+});
+
+// Remove the duplicate initialization at the end
+// Keep only one initialization
+hasValidApiKey().then((hasKey) => {
+  if (hasKey) {
+    injectButtons().then((observer) => {
+      buttonsObserver = observer;
+    });
+  }
+});
 
 function updateButtonColors(theme) {
   const color = THEME_COLORS[theme];
@@ -167,28 +245,6 @@ function updateButtonColors(theme) {
     `rgba(${r}, ${g}, ${b}, 0.1)`
   );
 }
-
-// Add message listener for theme changes
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === "THEME_CHANGED") {
-    updateButtonColors(request.theme);
-  } else if (request.type === "API_KEY_REFRESH") {
-    // Clear any existing error messages
-    const existingError = document.querySelector(".tweet-reply-error");
-    if (existingError) existingError.remove();
-
-    // Re-enable any disabled buttons
-    document.querySelectorAll(".xengage-btn").forEach((button) => {
-      button.classList.remove("loading");
-      button.disabled = false;
-      // Reset button text if it was in loading state
-      if (button.textContent.includes("...")) {
-        const [emoji, text] = button.textContent.split(" ");
-        button.innerHTML = `${emoji} ${text.replace(" ...", "")}`;
-      }
-    });
-  }
-});
 
 // Add this to the end of the file to set initial theme
 chrome.storage.sync.get("theme", ({ theme }) => {

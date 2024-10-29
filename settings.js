@@ -54,11 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         successMessage.style.display = "none";
       }, 3000);
-
-      // After successful save, notify background script
-      chrome.runtime.sendMessage({
-        type: "API_KEY_UPDATED",
-      });
     } catch (error) {
       console.error("Error saving writing style:", error);
       alert("Failed to save writing style. Please try again.");
@@ -102,6 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear local storage API key flag
       await chrome.storage.local.set({ hasApiKey: false });
 
+      // Notify background script about API key reset
+      chrome.runtime.sendMessage({ type: "RESET_API_KEY" });
+
       // Show success message
       resetMessage.style.display = "block";
       setTimeout(() => {
@@ -115,4 +113,42 @@ document.addEventListener("DOMContentLoaded", () => {
       resetApiKeyBtn.textContent = "Reset API Key";
     }
   });
+
+  // Add API key form handling
+  const apiKeyForm = document.getElementById("apiKeyForm");
+  if (apiKeyForm) {
+    apiKeyForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const apiKey = document.getElementById("apiKey").value;
+
+      try {
+        const response = await chrome.runtime.sendMessage({
+          type: "SAVE_API_KEY",
+          apiKey,
+        });
+
+        if (response.success) {
+          // Show success message
+          document.getElementById("successMessage").style.display = "block";
+          setTimeout(() => {
+            document.getElementById("successMessage").style.display = "none";
+          }, 3000);
+
+          // Clear the input
+          document.getElementById("apiKey").value = "";
+
+          // Set hasApiKey flag in local storage
+          await chrome.storage.local.set({ hasApiKey: true });
+
+          // Notify background script about API key update
+          chrome.runtime.sendMessage({ type: "API_KEY_UPDATED" });
+        } else {
+          throw new Error(response.error || "Failed to save API key");
+        }
+      } catch (error) {
+        console.error("Error saving API key:", error);
+        alert("Failed to save API key. Please try again.");
+      }
+    });
+  }
 });
